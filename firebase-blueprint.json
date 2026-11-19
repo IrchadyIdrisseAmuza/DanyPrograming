@@ -1,0 +1,460 @@
+{
+  "entities": {
+    "UserPublicProfile": {
+      "title": "UserPublicProfile",
+      "description": "Public-safe account metadata stored in /users/{userId}. Contains no PII and no verification codes.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "publicCode": {
+          "type": "string",
+          "description": "Public MILION code (MIL-XXXXXX)",
+          "minLength": 10,
+          "maxLength": 10,
+          "pattern": "^MIL-[0-9]{6}$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User full display name",
+          "minLength": 3,
+          "maxLength": 120
+        },
+        "role": {
+          "type": "string",
+          "description": "Access role (strictly USER on client self-creation)",
+          "enum": ["USER", "ADMIN", "SUPER_ADMIN"]
+        },
+        "status": {
+          "type": "string",
+          "description": "Account lifecycle status",
+          "enum": ["ACTIVE", "SUSPENDED", "PENDING_VERIFICATION"]
+        },
+        "emailVerified": {
+          "type": "boolean",
+          "description": "Mandatory e-mail confirmation boolean (codes stored hashed server-side in SQLite only)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp"
+        }
+      },
+      "required": ["uid", "publicCode", "displayName", "role", "status", "emailVerified", "createdAt", "updatedAt"]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Isolated PII document stored in /users/{userId}/private/{docId}. Strictly restricted to owner and admin.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified e-mail address",
+          "minLength": 6,
+          "maxLength": 120,
+          "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Immutable registered phone number",
+          "minLength": 7,
+          "maxLength": 32
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": ["uid", "email", "phone", "createdAt", "updatedAt"]
+    },
+    "WalletRecord": {
+      "title": "WalletRecord",
+      "description": "Mirror wallet record stored in /wallets/{userId}. Authoritative transactional ledger remains backend SQLite; client updates blocked.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "availableBalance": {
+          "type": "number",
+          "description": "Available USD balance (>= 0)"
+        },
+        "lockedBalance": {
+          "type": "number",
+          "description": "Capital reserved in active operations (>= 0)"
+        },
+        "pendingBalance": {
+          "type": "number",
+          "description": "Pending legacy balance (>= 0)"
+        },
+        "reservedBalance": {
+          "type": "number",
+          "description": "Capital held in pending withdrawal reserves (>= 0)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": ["uid", "availableBalance", "lockedBalance", "pendingBalance", "reservedBalance", "updatedAt"]
+    },
+    "DepositRecord": {
+      "title": "DepositRecord",
+      "description": "Read-only M-Pesa deposit projection stored in /deposits/{depositId}. Mutated exclusively by backend.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 48,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "method": {
+          "type": "string",
+          "enum": ["M-Pesa"]
+        },
+        "amountUsd": {
+          "type": "number"
+        },
+        "amountMt": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["CREATED", "PAYMENT_PENDING", "CREDITED", "FAILED", "EXPIRED", "RECONCILIATION_REQUIRED", "REJECTED"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "reference", "method", "amountUsd", "amountMt", "status", "createdAt", "updatedAt"]
+    },
+    "WithdrawalRecord": {
+      "title": "WithdrawalRecord",
+      "description": "Read-only M-Pesa withdrawal projection stored in /withdrawals/{withdrawalId}. Mutated exclusively by backend.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 48,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "destinationType": {
+          "type": "string",
+          "enum": ["M-Pesa"]
+        },
+        "amountUsd": {
+          "type": "number"
+        },
+        "amountMt": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["AWAITING_APPROVAL", "APPROVED", "DISBURSEMENT_PENDING", "PAID", "REJECTED", "FAILED", "RECONCILIATION_REQUIRED"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "reference", "destinationType", "amountUsd", "amountMt", "status", "createdAt", "updatedAt"]
+    },
+    "OperationRecord": {
+      "title": "OperationRecord",
+      "description": "Read-only market operation projection stored in /operations/{operationId}. Mutated exclusively by backend.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 48,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["SUBIDA", "DESCIDA"]
+        },
+        "amountUsd": {
+          "type": "number"
+        },
+        "entryPrice": {
+          "type": "number"
+        },
+        "durationSeconds": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ACTIVE", "COMPLETED", "CANCELLED"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "reference", "direction", "amountUsd", "entryPrice", "durationSeconds", "status", "createdAt", "updatedAt"]
+    },
+    "LedgerRecord": {
+      "title": "LedgerRecord",
+      "description": "Immutable financial ledger projection in /ledger/{entryId}.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 48
+        },
+        "type": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "reference", "type", "amount", "createdAt"]
+    },
+    "NotificationRecord": {
+      "title": "NotificationRecord",
+      "description": "User notification record in /notifications/{notificationId}.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 160
+        },
+        "message": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 1000
+        },
+        "isRead": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "title", "message", "isRead", "createdAt"]
+    },
+    "SupportTicketRecord": {
+      "title": "SupportTicketRecord",
+      "description": "Support ticket in /support_tickets/{ticketId}.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 48,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 120
+        },
+        "category": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "status": {
+          "type": "string",
+          "enum": ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "reference", "subject", "category", "status", "createdAt", "updatedAt"]
+    },
+    "AuditLogRecord": {
+      "title": "AuditLogRecord",
+      "description": "Immutable administrative audit log in /audit_logs/{logId}.",
+      "type": "object",
+      "properties": {
+        "actorId": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "entityType": {
+          "type": "string"
+        },
+        "entityId": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["actorId", "action", "entityType", "entityId", "createdAt"]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Authorized administrator registry entry in /admins/{adminId}.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 6,
+          "maxLength": 120,
+          "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["ADMIN", "SUPER_ADMIN"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "role", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserPublicProfile" },
+      "description": "Account metadata without PII or verification tokens"
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivateInfo" },
+      "description": "Isolated PII subcollection (email and immutable phone)"
+    },
+    "/wallets/{userId}": {
+      "schema": { "$ref": "#/entities/WalletRecord" },
+      "description": "Read-only mirror of segregated USD wallet balances (SQLite is Single Source of Truth)"
+    },
+    "/deposits/{depositId}": {
+      "schema": { "$ref": "#/entities/DepositRecord" },
+      "description": "Read-only M-Pesa deposit projection (client writes blocked)"
+    },
+    "/withdrawals/{withdrawalId}": {
+      "schema": { "$ref": "#/entities/WithdrawalRecord" },
+      "description": "Read-only M-Pesa withdrawal projection (client writes blocked)"
+    },
+    "/operations/{operationId}": {
+      "schema": { "$ref": "#/entities/OperationRecord" },
+      "description": "Read-only user market operations projection (client writes blocked)"
+    },
+    "/ledger/{entryId}": {
+      "schema": { "$ref": "#/entities/LedgerRecord" },
+      "description": "Immutable financial ledger entries (client writes blocked)"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/NotificationRecord" },
+      "description": "User notifications (client writes blocked)"
+    },
+    "/support_tickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/SupportTicketRecord" },
+      "description": "User support tickets"
+    },
+    "/audit_logs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLogRecord" },
+      "description": "Immutable admin audit log (client writes blocked)"
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Administrator role registry"
+    }
+  }
+}

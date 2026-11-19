@@ -1,0 +1,6 @@
+{
+  "name": "MILION.SPACE",
+  "description": "Plataforma internacional de carteira digital, operações de subida e descida e mercado MIL-IDX.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
